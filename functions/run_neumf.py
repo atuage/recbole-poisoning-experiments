@@ -4,9 +4,12 @@ from logging import getLogger
 import torch
 import pickle
 
+import pandas as pd
+
 from recbole.config import Config
 from recbole.data import create_dataset, data_preparation, save_split_dataloaders, load_split_dataloaders
 from recbole.utils import init_logger, get_model, get_trainer, init_seed, set_color
+
 
 def run_neumf(n_layers = 3, saved = True ):
 
@@ -33,15 +36,21 @@ def run_neumf(n_layers = 3, saved = True ):
 
 	# dataset filtering
 	dataset = create_dataset(config)
+	
 	if config['save_dataset']:
 		dataset.save()
 	logger.info(dataset)
+	
+	
+	sampleFakeInters = [ [ 1, 242, 1, 881250950],] 
+	fakeInterDF = pd.DataFrame(sampleFakeInters,columns = ["user_id" ,"item_id", "rating", "timestamp"] )
+	dataset.join(sampleFakeInters)
 
 	# dataset splitting
 	train_data, valid_data, test_data = data_preparation(config, dataset)
 	if config['save_dataloaders']:
 		save_split_dataloaders(config, dataloaders=(train_data, valid_data, test_data))
-
+	
 	# model loading and initialization
 	model = get_model(config['model'])(config, train_data.dataset).to(config['device'])
 	logger.info(model)
@@ -69,4 +78,12 @@ def run_neumf(n_layers = 3, saved = True ):
 	
 	
 if __name__ == "__main__":
-	run_neumf(n_layers = 3)
+	
+	results=[]
+	for i in range(1:30):
+		results.append(run_neumf(n_layers = i))
+	
+	df1 = pd.DataFrame(results)
+	df1.to_csv()
+	
+	
