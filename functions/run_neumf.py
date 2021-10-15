@@ -7,25 +7,29 @@ import pickle
 import pandas as pd
 
 from recbole.config import Config
-from recbole.data import create_dataset, data_preparation, save_split_dataloaders, load_split_dataloaders
+from recbole.data import create_dataset, data_preparation, save_split_dataloaders, load_split_dataloaders,create_samplers
 from recbole.utils import init_logger, get_model, get_trainer, init_seed, set_color
 
 
-def run_neumf(n_layers = 3, saved = True ):
+def run_neumf(n_layers = 3, saved = True , parameter_dict=None):
 
 	mlp_list=[]
 	
 	for i in range(n_layers):
 		mlp_list.append(128)
-		
-	parameter_dict = {
-		'mlp_hidden_size': mlp_list,
-		'use_gpu':True,
-		'epochs':30,
-		'stopping_step':30,
-		'seed':2020
-	}
-	config = Config(model="NeuMF", dataset="ml-100k", config_file_list=None, config_dict=parameter_dict)
+	
+	if parameter_dict ==None:	
+		parameter_dict = {
+			'mlp_hidden_size': mlp_list,
+			'use_gpu':True,
+			'epochs':30,
+			'stopping_step':30,
+			'seed':2020
+		}
+	else:
+		parameter_dict['mlp_hidden_size'] = mlp_list
+	
+	config = Config(model="NeuMF", config_file_list=None, config_dict=parameter_dict)
 	
 	init_seed(config['seed'], config['reproducibility'])
 
@@ -42,9 +46,17 @@ def run_neumf(n_layers = 3, saved = True ):
 	logger.info(dataset)
 	
 	
-	sampleFakeInters = [ [ 1, 242, 1, 881250950],] 
-	fakeInterDF = pd.DataFrame(sampleFakeInters,columns = ["user_id" ,"item_id", "rating", "timestamp"] )
-	dataset.join(sampleFakeInters)
+	#sampleFakeInters = [ [ 1, 242, 1, 881250950],] 
+	#fakeInterDF = pd.DataFrame(sampleFakeInters,columns = ["user_id" ,"item_id", "rating", "timestamp"] )
+	#dataset.join(sampleFakeInters)
+
+	#model_type = config['MODEL_TYPE']
+    #built_datasets = dataset.build()
+	
+    #train_dataset, valid_dataset, test_dataset = built_datasets
+    #train_sampler, valid_sampler, test_sampler = create_samplers(config, dataset, built_datasets)	
+	
+	
 
 	# dataset splitting
 	train_data, valid_data, test_data = data_preparation(config, dataset)
@@ -80,9 +92,9 @@ def run_neumf(n_layers = 3, saved = True ):
 if __name__ == "__main__":
 	
 	results=[]
-	for i in range(1:30):
+	for i in range(1,30):
 		results.append(run_neumf(n_layers = i))
-	
+	#master_data_file = 
 	df1 = pd.DataFrame(results)
 	df1.to_csv()
 	
